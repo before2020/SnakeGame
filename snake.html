@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>贪吃蛇</title>
+    <style>
+        #main {
+            position: relative;
+        }
+        .unit {
+            position: absolute;
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: pink;
+            border-radius: 35%;
+
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            color: white;
+        }
+        #bbox {
+            background-color: powderblue;
+        }
+    </style>
+</head>
+
+<body>
+<div id="main">
+    <div id="snake">
+        <div class="unit" id="head"></div>
+        <div class="unit"></div>
+        <div class="unit"></div>
+        <div class="unit"></div>
+    </div>
+
+    <div id="bbox" class="unit"></div>
+
+</div>
+</body>
+
+<script>
+
+    const step = 30;
+    const LARGE_INTERVAL = 200;
+    const SMALL_INTERVAL = 50;
+
+    const gridWidth   = 28;
+    const gridHeight  = 12;
+
+    const bbox = document.getElementById('bbox');
+
+    const snake = document.getElementById('snake').children;
+    const head = snake[0];
+
+    let topOffset = 0, leftOffset = step * 3;
+    let length = snake.length;
+    let boxLeft = 0, boxTop = 0;
+    let direction = 'right';
+    let timeInterval = LARGE_INTERVAL; //每隔500ms自动走一格
+    let state = 'normal'; // 游戏状态，包括normal, pause, stop
+
+    setBoxPosition();
+
+    for(let i = 0; i < length; i += 1) {
+        snake[i].style.left = (length - i - 1) * step + 'px';
+    }
+
+    let autoMove = window.setInterval("move(direction)", timeInterval);
+    let nowTime = 0, lastOperationTime = 0;
+
+    document.onkeydown = function (e) {
+        // 两次按方向键的时间差小于500ms,加速
+        // timeInterval = (nowTime - lastOperationTime) < 500
+        //                         ? SMALL_INTERVAL
+        //                         : LARGE_INTERVAL;
+        // lastOperationTime = nowTime;
+
+        switch(e.keyCode) {
+
+            case 37:
+                if(direction !== 'right') direction = 'left';
+                break;
+            case 39:
+                if(direction !== 'left') direction = 'right';
+                break;
+            case 38:
+                if(direction !== 'down') direction = 'up';
+                break;
+            case 40:
+                if(direction !== 'up') direction = 'down';
+                break;
+            case 32: //空格暂停
+                if(state === 'normal') {
+                    state = 'pause';
+                    clearInterval(autoMove);
+                } else {
+                    state = 'normal';
+                    autoMove = setInterval("move(direction)", timeInterval);
+                }
+        }
+    };
+
+    //如果direction不传进来，就没法改变，除非clearInterval()再重新setInterval()
+    function move(direction) {
+        nowTime += timeInterval;
+        let preLeft = head.style.left, preTop = head.style.top;
+        let tempLeft, tempTop;
+
+        switch(direction) {
+
+            case 'left':
+                leftOffset -= step;
+                head.style.left = leftOffset + 'px';
+                break;
+
+            case 'right':
+                leftOffset += step;
+                head.style.left = leftOffset + 'px';
+                break;
+
+            case 'up':
+                topOffset -= step;
+                head.style.top = topOffset + 'px';
+                break;
+
+            case 'down':
+                topOffset += step;
+                head.style.top = topOffset + 'px';
+                break;
+        }
+
+        for(let i = 1; i < length; i++) {
+            tempLeft = snake[i].style.left;
+            tempTop  = snake[i].style.top;
+            snake[i].style.left = preLeft;
+            snake[i].style.top  = preTop;
+            preLeft = tempLeft;
+            preTop  = tempTop;
+        }
+        // 抵达目标（蓝盒子）
+        if(leftOffset === boxLeft && topOffset === boxTop) {
+            let node = head.cloneNode(true);
+            node.style.left = preLeft;
+            node.style.top  = preTop;
+            //node.innerText = length;
+            document.getElementById('snake').appendChild(node);
+            length += 1;
+            setBoxPosition();
+        }
+    }
+    function setBoxPosition() {
+        boxLeft = Math.ceil(Math.random()*gridWidth) * step;
+        boxTop  = Math.ceil(Math.random()*gridHeight) * step;
+        bbox.style.left = boxLeft + 'px';
+        bbox.style.top  = boxTop  + 'px';
+    }
+</script>
+
+</html>
